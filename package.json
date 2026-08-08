@@ -1,0 +1,25 @@
+{
+  "name": "pic-moments",
+  "version": "1.0.0",
+  "description": "Pic Moments - upload de fotos do casamento para Google Drive",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.112.2",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.4.1",
+    "multer": "^2.2.0"
+  },
+  "keywords": [
+    "wedding",
+    "gallery",
+    "drive",
+    "upload"
+  ],
+  "author": "",
+  "license": "MIT"
+}

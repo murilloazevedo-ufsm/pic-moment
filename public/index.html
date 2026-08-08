@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pic Moments - Inara & Lucas</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand-block">
+        <span class="logo-badge">♥</span>
+        <div>
+          <p class="event-kicker">Pic Moments</p>
+          <h1>Inara & Lucas</h1>
+        </div>
+      </div>
+      <span class="tag">Casamento</span>
+    </header>
+
+    <main class="upload-panel">
+      <section class="hero-card">
+        <div class="hero-copy">
+          <span class="eyebrow">Galeria do dia</span>
+          <h2>Compartilhe suas fotos</h2>
+          <p class="subtitle">Envie as fotos do casamento com o seu celular.</p>
+        </div>
+
+        <div class="upload-card">
+          <label for="photoInput" class="drop-zone" id="dropZone">
+            <input id="photoInput" type="file" accept="image/*" multiple />
+            <span class="icon-cloud">+</span>
+            <span class="drop-title">Escolher fotos</span>
+            <span class="drop-subtitle">Até 15 fotos por envio</span>
+          </label>
+
+          <div class="selected-files-wrap">
+            <div class="selected-files-header">
+              <span id="fileCounter">0 fotos selecionadas</span>
+              <button id="clearButton" class="ghost-button hidden">Limpar</button>
+            </div>
+            <ul id="fileList" class="file-list"></ul>
+          </div>
+
+          <div class="progress-section hidden" id="progressPanel">
+            <div class="progress-header">
+              <span>Enviando fotos...</span>
+              <span id="percentText">0%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-bar" id="progressBar"></div>
+            </div>
+          </div>
+
+          <button id="submitButton" class="primary-button">
+            Enviar fotos
+          </button>
+
+          <p id="message" class="message"></p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
