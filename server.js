@@ -9,6 +9,7 @@ if (fs.existsSync(path.join(process.cwd(), '.env'))) {
 
 const express = require('express');
 const rateLimit = require('express-rate-limit');
+const QRCode = require('qrcode');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
@@ -361,6 +362,36 @@ app.get('/api/stories', async (req, res) => {
       success: false,
       message: error.message || 'Erro ao listar os stories.'
     });
+  }
+});
+
+const QR_ALLOWED_PATHS = new Set(['/inara-e-lucas', '/inara-e-lucas/album']);
+
+app.get('/api/qr.png', async (req, res) => {
+  try {
+    const pagePath = String(req.query.path || '/inara-e-lucas');
+
+    if (!QR_ALLOWED_PATHS.has(pagePath)) {
+      return res.status(400).json({ success: false, message: 'Página inválida.' });
+    }
+
+    const host = req.get('x-forwarded-host') || req.get('host');
+    const proto = String(req.get('x-forwarded-proto') || 'https').split(',')[0];
+    const url = `${proto}://${host}${pagePath}`;
+
+    const png = await QRCode.toBuffer(url, {
+      width: 480,
+      margin: 2,
+      color: { dark: '#422b31', light: '#fffdfb' }
+    });
+
+    res.set('Content-Type', 'image/png');
+    res.set('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+    res.send(png);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({ success: false, message: 'Erro ao gerar o QR Code.' });
   }
 });
 
