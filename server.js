@@ -56,7 +56,14 @@ const allowedMimeTypes = new Set([
   'image/heif'
 ]);
 
-const allowedVideoTypes = new Set(['video/webm', 'video/mp4', 'video/quicktime']);
+const allowedStoryTypes = new Set(['video/webm', 'video/mp4', 'video/quicktime', 'image/jpeg']);
+
+const storyExtensions = {
+  'video/mp4': 'mp4',
+  'video/quicktime': 'mov',
+  'video/webm': 'webm',
+  'image/jpeg': 'jpg'
+};
 
 const MAX_STORY_SIZE = Number(process.env.STORY_MAX_FILE_SIZE_BYTES || 40 * 1024 * 1024);
 const MAX_FILES_PER_REQUEST = Number(process.env.UPLOAD_MAX_FILES_PER_REQUEST || 30);
@@ -274,21 +281,21 @@ app.post('/api/story-upload-url', async (req, res) => {
     const { type, size } = req.body || {};
     const baseType = String(type || '').split(';')[0].trim();
 
-    if (!allowedVideoTypes.has(baseType)) {
+    if (!allowedStoryTypes.has(baseType)) {
       return res.status(400).json({
         success: false,
-        message: 'Formato de vídeo não suportado.'
+        message: 'Formato não suportado para story.'
       });
     }
 
     if (Number(size || 0) > MAX_STORY_SIZE) {
       return res.status(400).json({
         success: false,
-        message: 'O vídeo ficou muito grande. Tente gravar novamente.'
+        message: 'O arquivo ficou muito grande. Tente novamente.'
       });
     }
 
-    const extension = baseType === 'video/mp4' ? 'mp4' : baseType === 'video/quicktime' ? 'mov' : 'webm';
+    const extension = storyExtensions[baseType];
     const baseName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const storagePath = `stories/${baseName}.${extension}`;
     const posterPath = `stories/thumbs/${baseName}.jpg`;
@@ -325,6 +332,65 @@ app.post('/api/story-upload-url', async (req, res) => {
   }
 });
 
+const STORY_PATH_PATTERN = /^stories\/[a-z0-9-]+\.(mp4|webm|mov|jpg)$/;
+
+app.post('/api/stories', async (req, res) => {
+  try {
+    const { path: storagePath, mediaType, caption } = req.body || {};
+
+    if (!STORY_PATH_PATTERN.test(String(storagePath || ''))) {
+      return res.status(400).json({ success: false, message: 'Story inválido.' });
+    }
+
+    if (mediaType !== 'photo' && mediaType !== 'video') {
+      return res.status(400).json({ success: false, message: 'Tipo de story inválido.' });
+    }
+
+    const cleanCaption = String(caption || '').trim().slice(0, 500);
+    const posterPath = `stories/thumbs/${storagePath.slice('stories/'.length).replace(/\.[^.]+$/, '')}.jpg`;
+
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.from('stories').insert({
+      storage_path: storagePath,
+      poster_path: posterPath,
+      media_type: mediaType,
+      caption: cleanCaption || null
+    });
+
+    if (error) {
+      console.warn(`[stories] registro indisponível (${error.code || error.message}) - rode a migration da tabela stories`);
+
+      return res.json({ success: true, saved: false });
+    }
+
+    res.json({ success: true, saved: true });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({ success: false, message: 'Erro ao registrar o story.' });
+  }
+});
+
+async function listStoriesFromStorage(supabase, bucket, baseUrl) {
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .list('stories', { limit: 1000, sortBy: { column: 'created_at', order: 'asc' } });
+
+  if (error) {
+    throw new Error(`Erro ao consultar o Supabase: ${error.message}`);
+  }
+
+  return data
+    .filter((item) => item.id && !item.name.startsWith('.'))
+    .map((item) => ({
+      url: `${baseUrl}stories/${encodeURIComponent(item.name)}`,
+      posterUrl: `${baseUrl}stories/thumbs/${encodeURIComponent(item.name.replace(/\.[^.]+$/, ''))}.jpg`,
+      mediaType: item.name.endsWith('.jpg') ? 'photo' : 'video',
+      caption: null,
+      createdAt: item.created_at
+    }));
+}
+
 app.get('/api/stories', async (req, res) => {
   try {
     const bucket = process.env.SUPABASE_BUCKET;
@@ -334,24 +400,30 @@ app.get('/api/stories', async (req, res) => {
     }
 
     const supabase = getSupabaseClient();
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .list('stories', { limit: 1000, sortBy: { column: 'created_at', order: 'asc' } });
-
-    if (error) {
-      throw new Error(`Erro ao consultar o Supabase: ${error.message}`);
-    }
-
     const baseUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/${bucket}/`;
 
-    const stories = data
-      .filter((item) => item.id && !item.name.startsWith('.'))
-      .map((item) => ({
-        name: item.name,
-        url: `${baseUrl}stories/${encodeURIComponent(item.name)}`,
-        posterUrl: `${baseUrl}stories/thumbs/${encodeURIComponent(item.name.replace(/\.[^.]+$/, ''))}.jpg`,
-        createdAt: item.created_at
+    const { data, error } = await supabase
+      .from('stories')
+      .select('storage_path, poster_path, media_type, caption, created_at')
+      .order('created_at', { ascending: true })
+      .limit(1000);
+
+    let stories;
+
+    if (error) {
+      console.warn('[stories] usando fallback do storage - rode a migration da tabela stories');
+      stories = await listStoriesFromStorage(supabase, bucket, baseUrl);
+    } else {
+      stories = data.map((row) => ({
+        url: `${baseUrl}${row.storage_path.split('/').map(encodeURIComponent).join('/')}`,
+        posterUrl: row.poster_path
+          ? `${baseUrl}${row.poster_path.split('/').map(encodeURIComponent).join('/')}`
+          : null,
+        mediaType: row.media_type,
+        caption: row.caption,
+        createdAt: row.created_at
       }));
+    }
 
     res.set('Cache-Control', EDGE_CACHE_HEADER);
     res.json({ success: true, stories });

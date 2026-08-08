@@ -11,6 +11,8 @@ const message = document.getElementById('message');
 const momentsCounter = document.getElementById('momentsCounter');
 
 const MAX_CLIENT_UPLOAD = 15;
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+const acceptedPhotoTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']);
 
 let selectedFiles = [];
 
@@ -89,11 +91,28 @@ async function refreshMoments() {
 
 refreshMoments();
 
+function shortName(fileName) {
+  return fileName.length > 28 ? `${fileName.slice(0, 25)}...` : fileName;
+}
+
 function addFiles(newFiles) {
-  const images = newFiles.filter((file) => file.type.startsWith('image/'));
+  const notPhoto = [];
+  const tooBig = [];
+  const accepted = [];
+
+  newFiles.forEach((file) => {
+    if (!acceptedPhotoTypes.has(file.type)) {
+      notPhoto.push(file.name);
+    } else if (file.size > MAX_PHOTO_BYTES) {
+      tooBig.push(file.name);
+    } else {
+      accepted.push(file);
+    }
+  });
+
   const combined = selectedFiles.slice();
 
-  images.forEach((file) => {
+  accepted.forEach((file) => {
     const duplicate = combined.some((selected) =>
       selected.name === file.name &&
       selected.size === file.size &&
@@ -105,14 +124,28 @@ function addFiles(newFiles) {
     }
   });
 
-  if (combined.length > MAX_CLIENT_UPLOAD) {
-    selectedFiles = combined.slice(0, MAX_CLIENT_UPLOAD);
-    setMessage(`Você pode enviar até ${MAX_CLIENT_UPLOAD} fotos por vez.`, 'error');
-  } else {
-    selectedFiles = combined;
-    setMessage('');
+  const problems = [];
+
+  if (notPhoto.length === 1) {
+    problems.push(`"${shortName(notPhoto[0])}" não é uma foto — envie JPG, PNG, WEBP ou HEIC.`);
+  } else if (notPhoto.length > 1) {
+    problems.push(`${notPhoto.length} arquivos não são fotos e foram ignorados.`);
   }
 
+  if (tooBig.length === 1) {
+    problems.push(`"${shortName(tooBig[0])}" passa de 10 MB e ficou de fora.`);
+  } else if (tooBig.length > 1) {
+    problems.push(`${tooBig.length} fotos passam de 10 MB e ficaram de fora.`);
+  }
+
+  if (combined.length > MAX_CLIENT_UPLOAD) {
+    selectedFiles = combined.slice(0, MAX_CLIENT_UPLOAD);
+    problems.push(`Você pode enviar até ${MAX_CLIENT_UPLOAD} fotos por vez.`);
+  } else {
+    selectedFiles = combined;
+  }
+
+  setMessage(problems.join(' '), problems.length ? 'error' : 'info');
   renderFiles();
 }
 
