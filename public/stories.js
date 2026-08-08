@@ -1,3 +1,37 @@
+document.body.insertAdjacentHTML('beforeend', `
+  <div id="storyViewer" class="story-viewer hidden">
+    <div class="story-progress" id="storyProgress"></div>
+    <button type="button" id="storyViewerClose" class="story-overlay-close" aria-label="Fechar">×</button>
+    <video id="storyVideo" playsinline></video>
+    <div class="story-tap story-tap-left" id="storyPrevTap"></div>
+    <div class="story-tap story-tap-right" id="storyNextTap"></div>
+  </div>
+
+  <div id="storyRecorder" class="story-recorder hidden">
+    <button type="button" id="storyRecorderClose" class="story-overlay-close" aria-label="Fechar">×</button>
+
+    <div id="recorderLive">
+      <video id="recorderPreview" autoplay muted playsinline></video>
+      <div class="recorder-controls">
+        <span id="recordTimer" class="record-timer">15s</span>
+        <button type="button" id="recordButton" class="record-button" aria-label="Gravar"></button>
+        <p class="recorder-hint">Toque para gravar um momento de até 15 segundos</p>
+      </div>
+    </div>
+
+    <div id="recorderReview" class="hidden">
+      <video id="reviewVideo" playsinline loop></video>
+      <div class="recorder-controls">
+        <div class="review-actions">
+          <button type="button" id="retakeButton" class="secondary-button">Regravar</button>
+          <button type="button" id="sendStoryButton" class="primary-button">Compartilhar</button>
+        </div>
+        <p id="recorderMessage" class="message recorder-message"></p>
+      </div>
+    </div>
+  </div>
+`);
+
 const storiesBar = document.getElementById('storiesBar');
 const storyAddButton = document.getElementById('storyAddButton');
 

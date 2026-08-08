@@ -23,10 +23,20 @@
           <a class="tag tag-link" href="/inara-e-lucas/album">Ver álbum</a>
         </div>
         <span id="momentsCounter" class="moments-counter hidden"></span>
+        <span id="storiesCounter" class="moments-counter stories-counter hidden"></span>
       </div>
     </header>
 
     <main class="upload-panel">
+      <section class="stories-section">
+        <div class="stories-bar" id="storiesBar">
+          <button type="button" class="story-item" id="storyAddButton">
+            <span class="story-ring story-ring-add"><span class="story-add-icon">+</span></span>
+            <span class="story-name">Gravar</span>
+          </button>
+        </div>
+      </section>
+
       <section class="hero-card">
         <div class="hero-copy">
           <span class="eyebrow">Galeria do dia</span>
@@ -74,5 +84,6 @@
   </div>
 
   <script src="/app.js"></script>
+  <script src="/stories.js"></script>
 </body>
 </html>
