@@ -213,14 +213,6 @@ body {
   font-size: 13px;
 }
 
-.ghost-button {
-  border: 0;
-  background: transparent;
-  color: #a36874;
-  font-weight: 700;
-  cursor: pointer;
-}
-
 .file-list {
   list-style: none;
   display: flex;

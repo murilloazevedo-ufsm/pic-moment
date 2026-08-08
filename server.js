@@ -14,6 +14,39 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Atrás do proxy da Vercel: sem isso o rate limit enxerga um único IP para todos os visitantes
+app.set('trust proxy', 1);
+
+const supabaseOrigin = (() => {
+  try {
+    return new URL(process.env.SUPABASE_URL).origin;
+  } catch (err) {
+    return '';
+  }
+})();
+
+app.use((req, res, next) => {
+  res.set({
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(self), microphone=(self), geolocation=()',
+    'Content-Security-Policy': [
+      "default-src 'self'",
+      "script-src 'self'",
+      "style-src 'self' 'unsafe-inline'",
+      `img-src 'self' data: blob: ${supabaseOrigin}`.trim(),
+      `media-src 'self' blob: ${supabaseOrigin}`.trim(),
+      `connect-src 'self' ${supabaseOrigin}`.trim(),
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'"
+    ].join('; ')
+  });
+
+  next();
+});
+
 const allowedMimeTypes = new Set([
   'image/jpeg',
   'image/png',
@@ -381,7 +414,25 @@ function requireSession(req, res, next) {
   next();
 }
 
-app.post('/api/login', (req, res) => {
+function safeEqual(a, b) {
+  const hashA = crypto.createHash('sha256').update(String(a)).digest();
+  const hashB = crypto.createHash('sha256').update(String(b)).digest();
+
+  return crypto.timingSafeEqual(hashA, hashB);
+}
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Muitas tentativas de login. Aguarde alguns minutos.'
+  }
+});
+
+app.post('/api/login', loginLimiter, (req, res) => {
   const adminEmail = process.env.ADMIN_EMAIL;
   const adminPassword = process.env.ADMIN_PASSWORD;
 
@@ -390,8 +441,12 @@ app.post('/api/login', (req, res) => {
   }
 
   const { email, password } = req.body || {};
+  const emailOk = safeEqual(String(email || '').trim().toLowerCase(), adminEmail.toLowerCase());
+  const passwordOk = safeEqual(String(password || ''), adminPassword);
 
-  if (String(email || '').trim().toLowerCase() !== adminEmail.toLowerCase() || String(password || '') !== adminPassword) {
+  if (!emailOk || !passwordOk) {
+    console.warn(`[auth] tentativa de login falhou (ip=${req.ip})`);
+
     return res.status(401).json({ success: false, message: 'E-mail ou senha incorretos.' });
   }
 
