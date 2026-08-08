@@ -193,6 +193,10 @@ app.use((error, req, res, next) => {
   next();
 });
 
-app.listen(port, () => {
-  console.log(`Pic Moments running on port ${port}`);
-});
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Pic Moments running on port ${port}`);
+  });
+}
+
+module.exports = app;
