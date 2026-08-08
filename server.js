@@ -7,7 +7,6 @@ if (fs.existsSync(path.join(process.cwd(), '.env'))) {
 }
 
 const express = require('express');
-const multer = require('multer');
 const rateLimit = require('express-rate-limit');
 const { createClient } = require('@supabase/supabase-js');
 
@@ -25,21 +24,6 @@ const allowedMimeTypes = new Set([
 const MAX_FILES_PER_REQUEST = Number(process.env.UPLOAD_MAX_FILES_PER_REQUEST || 30);
 const MAX_FILE_SIZE = Number(process.env.UPLOAD_MAX_FILE_SIZE_BYTES || 10 * 1024 * 1024);
 const FRONTEND_LIMIT = Number(process.env.FRONTEND_UPLOAD_LIMIT || 15);
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: MAX_FILE_SIZE,
-    files: MAX_FILES_PER_REQUEST
-  },
-  fileFilter: (req, file, cb) => {
-    if (!allowedMimeTypes.has(file.mimetype)) {
-      return cb(new Error('Tipo de arquivo não permitido. Envie apenas imagens.'));
-    }
-
-    cb(null, true);
-  }
-});
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -68,34 +52,15 @@ function getSupabaseClient() {
   return createClient(url, key);
 }
 
-async function uploadToSupabase(file) {
-  const bucket = process.env.SUPABASE_BUCKET;
-
-  if (!bucket) {
-    throw new Error('O bucket do Supabase não está configurado.');
-  }
-
-  const supabase = getSupabaseClient();
-
-  const safeName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-  const storagePath = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
-
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .upload(storagePath, file.buffer, {
-      contentType: file.mimetype
-    });
-
-  if (error) {
-    throw new Error(`Erro ao enviar para o Supabase: ${error.message}`);
-  }
-
-  return { id: data.path, name: file.originalname };
-}
-
-app.post('/api/upload', upload.array('photos', MAX_FILES_PER_REQUEST), async (req, res) => {
+app.post('/api/upload-urls', async (req, res) => {
   try {
-    const files = req.files || [];
+    const bucket = process.env.SUPABASE_BUCKET;
+
+    if (!bucket) {
+      throw new Error('O bucket do Supabase não está configurado.');
+    }
+
+    const files = Array.isArray(req.body && req.body.files) ? req.body.files : [];
 
     if (files.length === 0) {
       return res.status(400).json({
@@ -111,41 +76,49 @@ app.post('/api/upload', upload.array('photos', MAX_FILES_PER_REQUEST), async (re
       });
     }
 
-    const uploadedFiles = [];
+    const supabase = getSupabaseClient();
+    const uploads = [];
 
     for (const file of files) {
-      if (!allowedMimeTypes.has(file.mimetype)) {
+      const name = String(file.name || 'foto');
+      const type = String(file.type || '');
+      const size = Number(file.size || 0);
+
+      if (!allowedMimeTypes.has(type)) {
         return res.status(400).json({
           success: false,
-          message: `Arquivo não suportado: ${file.originalname}`
+          message: `Arquivo não suportado: ${name}`
         });
       }
 
-      if (file.size > MAX_FILE_SIZE) {
+      if (size > MAX_FILE_SIZE) {
         return res.status(400).json({
           success: false,
-          message: `Arquivo muito grande: ${file.originalname}`
+          message: `Arquivo muito grande: ${name}`
         });
       }
 
-      const result = await uploadToSupabase(file);
-      uploadedFiles.push({
-        name: result.name,
-        id: result.id
-      });
+      const safeName = name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const storagePath = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
+
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .createSignedUploadUrl(storagePath);
+
+      if (error) {
+        throw new Error(`Erro ao preparar o upload: ${error.message}`);
+      }
+
+      uploads.push({ name, path: storagePath, url: data.signedUrl });
     }
 
-    return res.status(200).json({
-      success: true,
-      message: `${uploadedFiles.length} foto(s) enviada(s) com sucesso!`,
-      uploadedFiles
-    });
+    return res.json({ success: true, uploads });
   } catch (error) {
     console.error(error);
 
     return res.status(500).json({
       success: false,
-      message: error.message || 'Erro ao enviar as fotos.'
+      message: error.message || 'Erro ao preparar o envio das fotos.'
     });
   }
 });
@@ -162,27 +135,59 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+async function countMoments() {
+  const bucket = process.env.SUPABASE_BUCKET;
+
+  if (!bucket) {
+    throw new Error('O bucket do Supabase não está configurado.');
+  }
+
+  const supabase = getSupabaseClient();
+  const pageSize = 1000;
+  let offset = 0;
+  let count = 0;
+
+  while (true) {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .list('', { limit: pageSize, offset, sortBy: { column: 'name', order: 'asc' } });
+
+    if (error) {
+      throw new Error(`Erro ao consultar o Supabase: ${error.message}`);
+    }
+
+    count += data.filter((item) => item.id && !item.name.startsWith('.')).length;
+
+    if (data.length < pageSize) {
+      break;
+    }
+
+    offset += pageSize;
+  }
+
+  return count;
+}
+
+app.get('/api/moments', async (req, res) => {
+  try {
+    const count = await countMoments();
+
+    res.json({ success: true, count });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Erro ao contar os momentos.'
+    });
+  }
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.use((error, req, res, next) => {
-  if (error instanceof multer.MulterError) {
-    if (error.code === 'LIMIT_FILE_COUNT') {
-      return res.status(400).json({
-        success: false,
-        message: `Máximo de ${MAX_FILES_PER_REQUEST} fotos por request.`
-      });
-    }
-
-    if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({
-        success: false,
-        message: `Uma foto excedeu o tamanho permitido de ${MAX_FILE_SIZE} bytes.`
-      });
-    }
-  }
-
   if (error) {
     return res.status(400).json({
       success: false,
