@@ -173,6 +173,8 @@ async function openRecorder() {
   recorderReview.classList.add('hidden');
   recordButton.classList.remove('recording');
   recordTimer.textContent = `${STORY_MAX_SECONDS}s`;
+  recordedBlob = null;
+  document.getElementById('sendStoryButton').disabled = false;
   setRecorderMessage('');
   storyRecorder.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
@@ -325,6 +327,7 @@ document.getElementById('sendStoryButton').addEventListener('click', async () =>
     loadStories();
   } catch (error) {
     setRecorderMessage(error.message || 'Erro ao enviar o story.', true);
+  } finally {
     sendButton.disabled = false;
   }
 });
