@@ -577,25 +577,21 @@ app.get('/api/admin/stats', requireSession, async (req, res) => {
   }
 });
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'landing.html'));
-});
+// Páginas estáticas: cache de borda agressivo (a Vercel invalida a cada deploy)
+const PAGE_CACHE_HEADER = 'public, max-age=0, s-maxage=300, stale-while-revalidate=600';
 
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
+function servePage(fileName) {
+  return (req, res) => {
+    res.set('Cache-Control', PAGE_CACHE_HEADER);
+    res.sendFile(path.join(__dirname, 'public', fileName));
+  };
+}
 
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-
-app.get('/inara-e-lucas', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'upload.html'));
-});
-
-app.get('/inara-e-lucas/album', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'album.html'));
-});
+app.get('/', servePage('landing.html'));
+app.get('/login', servePage('login.html'));
+app.get('/admin', servePage('admin.html'));
+app.get('/inara-e-lucas', servePage('upload.html'));
+app.get('/inara-e-lucas/album', servePage('album.html'));
 
 app.get('*', (req, res) => {
   res.redirect('/');
