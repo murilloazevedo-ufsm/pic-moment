@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Entrar - Pic Moments</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <a class="brand-block brand-link" href="/">
+        <span class="logo-badge">♥</span>
+        <div>
+          <p class="event-kicker">Pic Moments</p>
+          <h1>Pic Moments</h1>
+        </div>
+      </a>
+    </header>
+
+    <main class="login-panel">
+      <form id="loginForm" class="login-card">
+        <h2>Área do casal</h2>
+        <p class="login-subtitle">Entre para acompanhar e administrar o seu álbum.</p>
+
+        <label class="field-label" for="emailInput">E-mail</label>
+        <input id="emailInput" class="field-input" type="email" autocomplete="email" required />
+
+        <label class="field-label" for="passwordInput">Senha</label>
+        <input id="passwordInput" class="field-input" type="password" autocomplete="current-password" required />
+
+        <button id="loginButton" class="primary-button" type="submit">Entrar</button>
+
+        <p id="message" class="message"></p>
+      </form>
+    </main>
+  </div>
+
+  <script src="/login.js"></script>
+</body>
+</html>

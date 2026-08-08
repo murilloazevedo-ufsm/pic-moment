@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Área do casal - Pic Moments</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <a class="brand-block brand-link" href="/">
+        <span class="logo-badge">♥</span>
+        <div>
+          <p class="event-kicker">Pic Moments</p>
+          <h1>Área do casal</h1>
+        </div>
+      </a>
+      <div class="header-right">
+        <div class="header-pills">
+          <a class="tag tag-link" href="/inara-e-lucas">Página de envio</a>
+          <a class="tag tag-link" href="/inara-e-lucas/album">Ver álbum</a>
+          <button id="logoutButton" class="tag tag-link">Sair</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="admin-panel">
+      <p id="adminStatus" class="album-status">Carregando...</p>
+
+      <div id="adminContent" class="hidden">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-value" id="statCount">-</span>
+            <span class="stat-label">momentos compartilhados</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="statSize">-</span>
+            <span class="stat-label">de espaço usado</span>
+          </div>
+        </div>
+
+        <div class="admin-note">
+          <h3>Em construção 🚧</h3>
+          <p>
+            A área administrativa completa está a caminho: aqui você vai poder aprovar,
+            baixar e excluir fotos, gerar o QR Code do evento e muito mais.
+          </p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/admin.js"></script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const dotenv = require('dotenv');
 
 if (fs.existsSync(path.join(process.cwd(), '.env'))) {
@@ -221,6 +222,106 @@ app.get('/api/photos', async (req, res) => {
   }
 });
 
+const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+
+function sessionSecret() {
+  return process.env.SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || 'pic-moments-dev';
+}
+
+function createSessionToken(email) {
+  const payload = Buffer.from(JSON.stringify({ email, exp: Date.now() + SESSION_TTL_MS })).toString('base64url');
+  const signature = crypto.createHmac('sha256', sessionSecret()).update(payload).digest('base64url');
+
+  return `${payload}.${signature}`;
+}
+
+function verifySessionToken(token) {
+  const [payload, signature] = String(token || '').split('.');
+
+  if (!payload || !signature) {
+    return null;
+  }
+
+  const expected = crypto.createHmac('sha256', sessionSecret()).update(payload).digest('base64url');
+
+  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+    return null;
+  }
+
+  const session = JSON.parse(Buffer.from(payload, 'base64url').toString());
+
+  return session.exp > Date.now() ? session : null;
+}
+
+function requireSession(req, res, next) {
+  const auth = req.headers.authorization || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  let session = null;
+
+  try {
+    session = verifySessionToken(token);
+  } catch (err) {
+    session = null;
+  }
+
+  if (!session) {
+    return res.status(401).json({ success: false, message: 'Sessão inválida ou expirada.' });
+  }
+
+  req.session = session;
+  next();
+}
+
+app.post('/api/login', (req, res) => {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPassword) {
+    return res.status(500).json({ success: false, message: 'Login não configurado no servidor.' });
+  }
+
+  const { email, password } = req.body || {};
+
+  if (String(email || '').trim().toLowerCase() !== adminEmail.toLowerCase() || String(password || '') !== adminPassword) {
+    return res.status(401).json({ success: false, message: 'E-mail ou senha incorretos.' });
+  }
+
+  res.json({ success: true, token: createSessionToken(adminEmail) });
+});
+
+app.get('/api/admin/stats', requireSession, async (req, res) => {
+  try {
+    const files = await listAllPhotos();
+    const totalBytes = files.reduce((sum, file) => sum + ((file.metadata && file.metadata.size) || 0), 0);
+
+    res.json({
+      success: true,
+      email: req.session.email,
+      count: files.length,
+      totalBytes
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Erro ao carregar as estatísticas.'
+    });
+  }
+});
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'landing.html'));
+});
+
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
 app.get('/inara-e-lucas', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'upload.html'));
 });
@@ -230,7 +331,7 @@ app.get('/inara-e-lucas/album', (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.redirect('/inara-e-lucas');
+  res.redirect('/');
 });
 
 app.use((error, req, res, next) => {
