@@ -135,7 +135,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-async function countMoments() {
+async function listAllPhotos() {
   const bucket = process.env.SUPABASE_BUCKET;
 
   if (!bucket) {
@@ -145,7 +145,7 @@ async function countMoments() {
   const supabase = getSupabaseClient();
   const pageSize = 1000;
   let offset = 0;
-  let count = 0;
+  const files = [];
 
   while (true) {
     const { data, error } = await supabase.storage
@@ -156,7 +156,7 @@ async function countMoments() {
       throw new Error(`Erro ao consultar o Supabase: ${error.message}`);
     }
 
-    count += data.filter((item) => item.id && !item.name.startsWith('.')).length;
+    files.push(...data.filter((item) => item.id && !item.name.startsWith('.')));
 
     if (data.length < pageSize) {
       break;
@@ -165,14 +165,14 @@ async function countMoments() {
     offset += pageSize;
   }
 
-  return count;
+  return files;
 }
 
 app.get('/api/moments', async (req, res) => {
   try {
-    const count = await countMoments();
+    const files = await listAllPhotos();
 
-    res.json({ success: true, count });
+    res.json({ success: true, count: files.length });
   } catch (error) {
     console.error(error);
 
@@ -183,8 +183,40 @@ app.get('/api/moments', async (req, res) => {
   }
 });
 
+app.get('/api/photos', async (req, res) => {
+  try {
+    const files = await listAllPhotos();
+    const baseUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/${process.env.SUPABASE_BUCKET}/`;
+
+    const photos = files
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .map((file) => ({
+        name: file.name,
+        url: `${baseUrl}${encodeURIComponent(file.name)}`,
+        createdAt: file.created_at
+      }));
+
+    res.json({ success: true, photos });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Erro ao listar as fotos.'
+    });
+  }
+});
+
+app.get('/inara-e-lucas', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'upload.html'));
+});
+
+app.get('/inara-e-lucas/album', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'album.html'));
+});
+
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.redirect('/inara-e-lucas');
 });
 
 app.use((error, req, res, next) => {

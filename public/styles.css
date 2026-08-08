@@ -388,3 +388,97 @@ body {
     font-size: 42px;
   }
 }
+
+.header-pills {
+  display: flex;
+  gap: 8px;
+}
+
+.tag-link {
+  text-decoration: none;
+  background: #fff;
+  transition: background 190ms ease;
+}
+
+.tag-link:hover {
+  background: #fdf8ee;
+}
+
+.album-panel {
+  margin-top: 42px;
+}
+
+.album-status {
+  text-align: center;
+  color: #8a7d7a;
+  font-size: 15px;
+  padding: 40px 0;
+}
+
+.album-status.error {
+  color: #b3565e;
+  font-weight: 700;
+}
+
+.album-grid {
+  columns: 4 220px;
+  column-gap: 14px;
+}
+
+.album-item {
+  break-inside: avoid;
+  margin: 0 0 14px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid #eadfd6;
+  background: #fffdfb;
+  box-shadow: 0 8px 28px rgba(121, 94, 83, 0.08);
+}
+
+.album-item img {
+  display: block;
+  width: 100%;
+  cursor: pointer;
+  transition: transform 220ms ease;
+}
+
+.album-item img:hover {
+  transform: scale(1.02);
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(30, 20, 22, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.lightbox img {
+  max-width: 100%;
+  max-height: 92vh;
+  border-radius: 12px;
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.28);
+}

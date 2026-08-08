@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Álbum - Inara & Lucas</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand-block">
+        <span class="logo-badge">♥</span>
+        <div>
+          <p class="event-kicker">Pic Moments</p>
+          <h1>Inara & Lucas</h1>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="header-pills">
+          <span class="tag">Álbum</span>
+          <a class="tag tag-link" href="/inara-e-lucas">Enviar fotos</a>
+        </div>
+        <span id="momentsCounter" class="moments-counter hidden"></span>
+      </div>
+    </header>
+
+    <main class="album-panel">
+      <p id="albumStatus" class="album-status">Carregando as fotos...</p>
+      <div id="albumGrid" class="album-grid"></div>
+    </main>
+  </div>
+
+  <div id="lightbox" class="lightbox hidden">
+    <button id="lightboxClose" class="lightbox-close" aria-label="Fechar">×</button>
+    <img id="lightboxImage" alt="" />
+  </div>
+
+  <script src="/album.js"></script>
+</body>
+</html>
