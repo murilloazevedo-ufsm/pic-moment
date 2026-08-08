@@ -906,3 +906,10 @@ button.tag-link {
 .recorder-message.error {
   color: #ffb3b8;
 }
+
+.stories-counter {
+  background: #fffdfb;
+  color: #a36874;
+  border: 1px solid #e3c7cd;
+  box-shadow: none;
+}

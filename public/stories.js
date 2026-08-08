@@ -58,15 +58,18 @@ async function loadStories() {
 
       ring.appendChild(poster);
 
-      const name = document.createElement('span');
-      name.className = 'story-name';
-      name.textContent = `Momento ${index + 1}`;
-
       item.appendChild(ring);
-      item.appendChild(name);
       item.addEventListener('click', () => openViewer(index));
       storiesBar.appendChild(item);
     });
+
+    const storiesCounter = document.getElementById('storiesCounter');
+
+    if (storiesCounter) {
+      const label = stories.length === 1 ? 'story compartilhado' : 'stories compartilhados';
+      storiesCounter.textContent = `🎞️ ${stories.length} ${label}`;
+      storiesCounter.classList.remove('hidden');
+    }
   } catch (err) {
     // barra de stories é opcional: falha silenciosa
   }
