@@ -913,3 +913,129 @@ button.tag-link {
   border: 1px solid #e3c7cd;
   box-shadow: none;
 }
+
+/* ---------- Mobile first: refinamentos para smartphones ---------- */
+
+.recorder-controls {
+  padding-bottom: calc(30px + env(safe-area-inset-bottom));
+}
+
+.story-progress {
+  top: calc(14px + env(safe-area-inset-top));
+}
+
+.story-overlay-close {
+  top: calc(10px + env(safe-area-inset-top));
+}
+
+button,
+.tag-link {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 560px) {
+  .app-shell {
+    padding: 16px 12px calc(24px + env(safe-area-inset-bottom));
+  }
+
+  .header-right {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .header-pills {
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    padding: 9px 14px;
+  }
+
+  .moments-counter {
+    font-size: 12px;
+    padding: 7px 14px;
+  }
+
+  .upload-panel,
+  .album-panel,
+  .admin-panel,
+  .login-panel {
+    margin-top: 22px;
+  }
+
+  .hero-card {
+    border-radius: 22px;
+    padding: 18px;
+  }
+
+  .upload-card {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .subtitle {
+    font-size: 16px;
+    margin-top: 14px;
+  }
+
+  .hero-copy h2 {
+    margin-top: 14px;
+  }
+
+  .stories-section {
+    padding: 12px 14px 10px;
+    border-radius: 18px;
+    margin-bottom: 16px;
+  }
+
+  .story-ring {
+    width: 62px;
+    height: 62px;
+  }
+
+  .album-grid {
+    columns: 2;
+    column-gap: 10px;
+  }
+
+  .album-item {
+    margin-bottom: 10px;
+    border-radius: 14px;
+  }
+
+  .thumb-remove {
+    width: 28px;
+    height: 28px;
+    font-size: 18px;
+  }
+
+  .file-list li.thumb {
+    width: 84px;
+    height: 84px;
+  }
+
+  .login-card {
+    padding: 26px 20px;
+    border-radius: 22px;
+  }
+
+  .stat-card {
+    padding: 22px;
+  }
+
+  .stat-value {
+    font-size: 34px;
+  }
+
+  .admin-note {
+    padding: 20px;
+  }
+
+  .lightbox {
+    padding: 10px;
+  }
+
+  .lightbox img {
+    border-radius: 8px;
+  }
+}
