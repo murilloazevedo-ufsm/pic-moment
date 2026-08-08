@@ -659,3 +659,250 @@ button.tag-link {
     width: 100%;
   }
 }
+
+/* ---------- Stories ---------- */
+
+.stories-section {
+  background: #fffdfb;
+  border: 1px solid #eadfd6;
+  border-radius: 26px;
+  box-shadow: 0 10px 40px rgba(121, 94, 83, 0.07);
+  padding: 18px 20px 14px;
+  margin-bottom: 26px;
+}
+
+.stories-bar {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.stories-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.story-item {
+  border: 0;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.story-ring {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(140deg, #e7c988, #d790a5 55%, #b07688);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.story-ring img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fffdfb;
+}
+
+.story-ring-fallback::after {
+  content: '🎞️';
+  font-size: 24px;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid #fffdfb;
+  background: #faf4ec;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.story-ring-add {
+  background: #fdf8ee;
+  border: 2px dashed #d7aeb7;
+  padding: 0;
+}
+
+.story-add-icon {
+  font-size: 30px;
+  color: #a36874;
+  font-weight: 300;
+}
+
+.story-name {
+  font-size: 12px;
+  color: #6c585c;
+  font-weight: 700;
+  max-width: 74px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Player de stories ---------- */
+
+.story-viewer,
+.story-recorder {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: #1b1215;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.story-viewer video,
+.story-recorder video {
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.story-progress {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 60px;
+  display: flex;
+  gap: 5px;
+  z-index: 2;
+}
+
+.story-progress-track {
+  flex: 1;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+}
+
+.story-progress-fill {
+  display: block;
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #e7c988, #d790a5);
+}
+
+.story-overlay-close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  z-index: 3;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.story-tap {
+  position: absolute;
+  top: 0;
+  bottom: 90px;
+  width: 35%;
+  z-index: 1;
+}
+
+.story-tap-left {
+  left: 0;
+}
+
+.story-tap-right {
+  right: 0;
+  width: 65%;
+}
+
+/* ---------- Gravador ---------- */
+
+#recorderLive,
+#recorderReview {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#recorderLive video,
+#recorderReview video {
+  flex: 1;
+  min-height: 0;
+}
+
+.recorder-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 18px 22px 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(180deg, transparent, rgba(27, 18, 21, 0.85));
+}
+
+.record-button {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  background: linear-gradient(140deg, #e7c988, #d790a5 55%, #b07688);
+  cursor: pointer;
+  transition: transform 150ms ease;
+}
+
+.record-button.recording {
+  transform: scale(0.82);
+  border-radius: 18px;
+  background: #d9534f;
+}
+
+.record-timer {
+  color: #fff;
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+}
+
+.recorder-hint {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  text-align: center;
+}
+
+.review-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.review-actions .secondary-button,
+.review-actions .primary-button {
+  margin-top: 0;
+}
+
+.recorder-message {
+  color: #fff;
+  text-align: center;
+}
+
+.recorder-message.error {
+  color: #ffb3b8;
+}

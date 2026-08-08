@@ -22,6 +22,9 @@ const allowedMimeTypes = new Set([
   'image/heif'
 ]);
 
+const allowedVideoTypes = new Set(['video/webm', 'video/mp4', 'video/quicktime']);
+
+const MAX_STORY_SIZE = Number(process.env.STORY_MAX_FILE_SIZE_BYTES || 40 * 1024 * 1024);
 const MAX_FILES_PER_REQUEST = Number(process.env.UPLOAD_MAX_FILES_PER_REQUEST || 30);
 const MAX_FILE_SIZE = Number(process.env.UPLOAD_MAX_FILE_SIZE_BYTES || 10 * 1024 * 1024);
 const FRONTEND_LIMIT = Number(process.env.FRONTEND_UPLOAD_LIMIT || 15);
@@ -218,6 +221,107 @@ app.get('/api/photos', async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Erro ao listar as fotos.'
+    });
+  }
+});
+
+app.post('/api/story-upload-url', async (req, res) => {
+  try {
+    const bucket = process.env.SUPABASE_BUCKET;
+
+    if (!bucket) {
+      throw new Error('O bucket do Supabase não está configurado.');
+    }
+
+    const { type, size } = req.body || {};
+    const baseType = String(type || '').split(';')[0].trim();
+
+    if (!allowedVideoTypes.has(baseType)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Formato de vídeo não suportado.'
+      });
+    }
+
+    if (Number(size || 0) > MAX_STORY_SIZE) {
+      return res.status(400).json({
+        success: false,
+        message: 'O vídeo ficou muito grande. Tente gravar novamente.'
+      });
+    }
+
+    const extension = baseType === 'video/mp4' ? 'mp4' : baseType === 'video/quicktime' ? 'mov' : 'webm';
+    const baseName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const storagePath = `stories/${baseName}.${extension}`;
+    const posterPath = `stories/thumbs/${baseName}.jpg`;
+
+    const supabase = getSupabaseClient();
+
+    const { data, error } = await supabase.storage.from(bucket).createSignedUploadUrl(storagePath);
+
+    if (error) {
+      throw new Error(`Erro ao preparar o story: ${error.message}`);
+    }
+
+    const { data: posterData, error: posterError } = await supabase.storage
+      .from(bucket)
+      .createSignedUploadUrl(posterPath);
+
+    if (posterError) {
+      throw new Error(`Erro ao preparar o story: ${posterError.message}`);
+    }
+
+    res.json({
+      success: true,
+      path: storagePath,
+      url: data.signedUrl,
+      posterUrl: posterData.signedUrl
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Erro ao preparar o story.'
+    });
+  }
+});
+
+app.get('/api/stories', async (req, res) => {
+  try {
+    const bucket = process.env.SUPABASE_BUCKET;
+
+    if (!bucket) {
+      throw new Error('O bucket do Supabase não está configurado.');
+    }
+
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .list('stories', { limit: 1000, sortBy: { column: 'created_at', order: 'asc' } });
+
+    if (error) {
+      throw new Error(`Erro ao consultar o Supabase: ${error.message}`);
+    }
+
+    const baseUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/${bucket}/`;
+
+    const stories = data
+      .filter((item) => item.id && !item.name.startsWith('.'))
+      .map((item) => ({
+        name: item.name,
+        url: `${baseUrl}stories/${encodeURIComponent(item.name)}`,
+        posterUrl: `${baseUrl}stories/thumbs/${encodeURIComponent(item.name.replace(/\.[^.]+$/, ''))}.jpg`,
+        createdAt: item.created_at
+      }));
+
+    res.json({ success: true, stories });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Erro ao listar os stories.'
     });
   }
 });
