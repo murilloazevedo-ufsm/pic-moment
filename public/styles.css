@@ -570,7 +570,7 @@ body {
   border-radius: 12px;
   min-height: 46px;
   padding: 0 14px;
-  font-size: 15px;
+  font-size: 16px; /* >= 16px evita o zoom automático do iOS ao focar */
   color: #2a2e35;
   background: #fff;
 }
@@ -1170,18 +1170,29 @@ button,
   overflow-y: auto;
 }
 
-.story-overlay-flip {
-  position: absolute;
-  top: calc(10px + env(safe-area-inset-top));
-  left: 14px;
-  z-index: 3;
-  width: 40px;
-  height: 40px;
+.recorder-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.toolbar-spacer {
+  width: 44px;
+  flex-shrink: 0;
+}
+
+.flip-button {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
   border: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.18);
   color: #fff;
-  font-size: 20px;
+  font-size: 21px;
   line-height: 1;
   cursor: pointer;
 }
@@ -1234,7 +1245,7 @@ button,
   background: rgba(27, 18, 21, 0.6);
   color: #fff;
   padding: 12px 14px;
-  font-size: 14px;
+  font-size: 16px; /* >= 16px evita o zoom automático do iOS ao focar */
   font-family: inherit;
   resize: none;
 }

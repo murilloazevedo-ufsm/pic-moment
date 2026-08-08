@@ -11,14 +11,17 @@ document.body.insertAdjacentHTML('beforeend', `
 
   <div id="storyRecorder" class="story-recorder hidden">
     <button type="button" id="storyRecorderClose" class="story-overlay-close" aria-label="Fechar">×</button>
-    <button type="button" id="flipCameraButton" class="story-overlay-flip" aria-label="Alternar câmera">⟲</button>
 
     <div id="recorderLive">
       <video id="recorderPreview" autoplay muted playsinline></video>
       <div class="recorder-controls">
-        <div class="mode-toggle" role="group" aria-label="Tipo de story">
-          <button type="button" id="modePhoto" class="mode-chip active">Foto</button>
-          <button type="button" id="modeVideo" class="mode-chip">Vídeo</button>
+        <div class="recorder-toolbar">
+          <span class="toolbar-spacer" aria-hidden="true"></span>
+          <div class="mode-toggle" role="group" aria-label="Tipo de story">
+            <button type="button" id="modePhoto" class="mode-chip active">Foto</button>
+            <button type="button" id="modeVideo" class="mode-chip">Vídeo</button>
+          </div>
+          <button type="button" id="flipCameraButton" class="flip-button" aria-label="Alternar câmera">⟲</button>
         </div>
         <span id="recordTimer" class="record-timer hidden">15s</span>
         <button type="button" id="recordButton" class="record-button" aria-label="Capturar"></button>
@@ -85,19 +88,10 @@ let countdownInterval = null;
 
 /* ---------- Barra de stories ---------- */
 
-async function loadStories() {
-  try {
-    const response = await fetch('/api/stories');
-    const data = await response.json();
+function renderBar() {
+  storiesBar.querySelectorAll('.story-item-media').forEach((node) => node.remove());
 
-    if (!data.success) {
-      return;
-    }
-
-    stories = data.stories;
-    storiesBar.querySelectorAll('.story-item-media').forEach((node) => node.remove());
-
-    stories.forEach((story, index) => {
+  stories.forEach((story, index) => {
       const item = document.createElement('button');
       item.type = 'button';
       item.className = 'story-item story-item-media';
@@ -123,13 +117,27 @@ async function loadStories() {
       storiesBar.appendChild(item);
     });
 
-    const storiesCounter = document.getElementById('storiesCounter');
+  const storiesCounter = document.getElementById('storiesCounter');
 
-    if (storiesCounter) {
-      const label = stories.length === 1 ? 'story compartilhado' : 'stories compartilhados';
-      storiesCounter.textContent = `🎞️ ${stories.length} ${label}`;
-      storiesCounter.classList.remove('hidden');
+  if (storiesCounter) {
+    const label = stories.length === 1 ? 'story compartilhado' : 'stories compartilhados';
+    storiesCounter.textContent = `🎞️ ${stories.length} ${label}`;
+    storiesCounter.classList.remove('hidden');
+  }
+}
+
+async function loadStories(fresh) {
+  try {
+    const url = fresh ? `/api/stories?fresh=${Date.now()}` : '/api/stories';
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (!data.success) {
+      return;
     }
+
+    stories = data.stories;
+    renderBar();
   } catch (err) {
     // barra de stories é opcional: falha silenciosa
   }
@@ -551,8 +559,18 @@ sendButton.addEventListener('click', async () => {
       // sem registro o story aparece sem legenda
     }
 
+    // aparece imediatamente na barra, sem esperar o cache da listagem
+    const localStory = {
+      url: URL.createObjectURL(recordedBlob),
+      posterUrl: posterBlob ? URL.createObjectURL(posterBlob) : null,
+      mediaType: recordedType,
+      caption: captionInput.value.trim() || null
+    };
+
     closeRecorder();
-    loadStories();
+    stories.push(localStory);
+    renderBar();
+    loadStories(true);
   } catch (error) {
     setRecorderMessage(error.message || 'Erro ao enviar o story.', true);
   } finally {
