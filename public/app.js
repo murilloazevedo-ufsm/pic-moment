@@ -27,11 +27,26 @@ function setMessage(text, type = 'info') {
 }
 
 function renderFiles() {
+  fileList.querySelectorAll('img').forEach((img) => {
+    URL.revokeObjectURL(img.src);
+  });
   fileList.innerHTML = '';
 
   selectedFiles.forEach((file) => {
     const item = document.createElement('li');
-    item.textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+    item.className = 'thumb';
+    item.title = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+
+    const img = document.createElement('img');
+    img.alt = file.name;
+    img.src = URL.createObjectURL(file);
+    img.addEventListener('error', () => {
+      URL.revokeObjectURL(img.src);
+      img.remove();
+      item.classList.add('thumb-fallback');
+    });
+
+    item.appendChild(img);
     fileList.appendChild(item);
   });
 
