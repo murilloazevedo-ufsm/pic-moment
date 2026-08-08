@@ -56,11 +56,17 @@ async function loadAlbum() {
       figure.className = 'album-item';
 
       const img = document.createElement('img');
-      img.src = photo.url;
+      img.src = photo.thumbUrl;
       img.alt = photo.name;
       img.loading = 'lazy';
       img.addEventListener('click', () => openLightbox(photo));
-      img.addEventListener('error', () => figure.remove());
+      img.addEventListener('error', () => {
+        if (img.src !== photo.url) {
+          img.src = photo.url;
+        } else {
+          figure.remove();
+        }
+      });
 
       figure.appendChild(img);
       albumGrid.appendChild(figure);

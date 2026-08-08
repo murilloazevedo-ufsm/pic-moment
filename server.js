@@ -109,7 +109,20 @@ app.post('/api/upload-urls', async (req, res) => {
         throw new Error(`Erro ao preparar o upload: ${error.message}`);
       }
 
-      uploads.push({ name, path: storagePath, url: data.signedUrl });
+      const { data: thumbData, error: thumbError } = await supabase.storage
+        .from(bucket)
+        .createSignedUploadUrl(`thumbs/${storagePath}`);
+
+      if (thumbError) {
+        throw new Error(`Erro ao preparar o upload: ${thumbError.message}`);
+      }
+
+      uploads.push({
+        name,
+        path: storagePath,
+        url: data.signedUrl,
+        thumbUrl: thumbData.signedUrl
+      });
     }
 
     return res.json({ success: true, uploads });
@@ -193,6 +206,7 @@ app.get('/api/photos', async (req, res) => {
       .map((file) => ({
         name: file.name,
         url: `${baseUrl}${encodeURIComponent(file.name)}`,
+        thumbUrl: `${baseUrl}thumbs/${encodeURIComponent(file.name)}`,
         createdAt: file.created_at
       }));
 

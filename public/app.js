@@ -133,6 +133,24 @@ function setProgress(percent) {
   percentText.textContent = `${percent}%`;
 }
 
+async function makeThumbnail(file) {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const maxSide = 600;
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+
+    return await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.78));
+  } catch (err) {
+    return null;
+  }
+}
+
 function sendToSupabase(file, uploadUrl, onProgress) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -200,6 +218,20 @@ async function uploadFiles() {
         const percent = Math.min(100, Math.round(((sentBytes + loaded) / totalBytes) * 100));
         setProgress(percent);
       });
+
+      const thumbnail = await makeThumbnail(file);
+
+      if (thumbnail) {
+        try {
+          await fetch(data.uploads[i].thumbUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'image/jpeg' },
+            body: thumbnail
+          });
+        } catch (err) {
+          // sem miniatura o álbum usa a foto original; não interrompe o envio
+        }
+      }
 
       sentBytes += file.size;
       setProgress(Math.min(100, Math.round((sentBytes / totalBytes) * 100)));
