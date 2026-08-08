@@ -310,6 +310,28 @@ body {
   transition: width 220ms ease;
 }
 
+.secondary-button {
+  width: 100%;
+  margin-top: 22px;
+  border: 1px solid #eadcc4;
+  border-radius: 14px;
+  background: #fdf8ee;
+  color: #7d6152;
+  min-height: 46px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: background 190ms ease;
+}
+
+.secondary-button:hover {
+  background: #f5ecd9;
+}
+
+.secondary-button + .primary-button {
+  margin-top: 12px;
+}
+
 .primary-button {
   width: 100%;
   margin-top: 22px;

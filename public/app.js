@@ -89,17 +89,36 @@ async function refreshMoments() {
 
 refreshMoments();
 
-fileInput.addEventListener('change', (event) => {
-  selectedFiles = Array.from(event.target.files || []);
+function addFiles(newFiles) {
+  const images = newFiles.filter((file) => file.type.startsWith('image/'));
+  const combined = selectedFiles.slice();
 
-  if (selectedFiles.length > MAX_CLIENT_UPLOAD) {
-    selectedFiles = selectedFiles.slice(0, MAX_CLIENT_UPLOAD);
+  images.forEach((file) => {
+    const duplicate = combined.some((selected) =>
+      selected.name === file.name &&
+      selected.size === file.size &&
+      selected.lastModified === file.lastModified
+    );
+
+    if (!duplicate) {
+      combined.push(file);
+    }
+  });
+
+  if (combined.length > MAX_CLIENT_UPLOAD) {
+    selectedFiles = combined.slice(0, MAX_CLIENT_UPLOAD);
     setMessage(`Você pode enviar até ${MAX_CLIENT_UPLOAD} fotos por vez.`, 'error');
   } else {
+    selectedFiles = combined;
     setMessage('');
   }
 
   renderFiles();
+}
+
+fileInput.addEventListener('change', (event) => {
+  addFiles(Array.from(event.target.files || []));
+  fileInput.value = '';
 });
 
 clearButton.addEventListener('click', () => {
@@ -216,13 +235,5 @@ submitButton.addEventListener('click', uploadFiles);
 });
 
 dropZone.addEventListener('drop', (event) => {
-  const droppedFiles = Array.from(event.dataTransfer.files || []);
-  selectedFiles = droppedFiles.filter((file) => file.type.startsWith('image/'));
-
-  if (selectedFiles.length > MAX_CLIENT_UPLOAD) {
-    selectedFiles = selectedFiles.slice(0, MAX_CLIENT_UPLOAD);
-    setMessage(`Você pode enviar até ${MAX_CLIENT_UPLOAD} fotos por vez.`, 'error');
-  }
-
-  renderFiles();
+  addFiles(Array.from(event.dataTransfer.files || []));
 });
