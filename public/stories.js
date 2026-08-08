@@ -340,7 +340,10 @@ document.getElementById('sendStoryButton').addEventListener('click', async () =>
 
     const upload = await fetch(data.url, {
       method: 'PUT',
-      headers: { 'Content-Type': recordedBlob.type.split(';')[0] },
+      headers: {
+        'Content-Type': recordedBlob.type.split(';')[0],
+        'Cache-Control': 'max-age=31536000'
+      },
       body: recordedBlob
     });
 
@@ -352,7 +355,7 @@ document.getElementById('sendStoryButton').addEventListener('click', async () =>
       try {
         await fetch(data.posterUrl, {
           method: 'PUT',
-          headers: { 'Content-Type': 'image/jpeg' },
+          headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'max-age=31536000' },
           body: posterBlob
         });
       } catch (err) {

@@ -157,6 +157,7 @@ function sendToSupabase(file, uploadUrl, onProgress) {
 
     xhr.open('PUT', uploadUrl);
     xhr.setRequestHeader('Content-Type', file.type);
+    xhr.setRequestHeader('Cache-Control', 'max-age=31536000');
 
     xhr.upload.addEventListener('progress', (event) => {
       if (event.lengthComputable) {
@@ -225,7 +226,7 @@ async function uploadFiles() {
         try {
           await fetch(data.uploads[i].thumbUrl, {
             method: 'PUT',
-            headers: { 'Content-Type': 'image/jpeg' },
+            headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'max-age=31536000' },
             body: thumbnail
           });
         } catch (err) {

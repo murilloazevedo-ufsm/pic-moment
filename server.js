@@ -185,10 +185,13 @@ async function listAllPhotos() {
   return files;
 }
 
+const EDGE_CACHE_HEADER = 'public, max-age=0, s-maxage=15, stale-while-revalidate=60';
+
 app.get('/api/moments', async (req, res) => {
   try {
     const files = await listAllPhotos();
 
+    res.set('Cache-Control', EDGE_CACHE_HEADER);
     res.json({ success: true, count: files.length });
   } catch (error) {
     console.error(error);
@@ -214,6 +217,7 @@ app.get('/api/photos', async (req, res) => {
         createdAt: file.created_at
       }));
 
+    res.set('Cache-Control', EDGE_CACHE_HEADER);
     res.json({ success: true, photos });
   } catch (error) {
     console.error(error);
@@ -315,6 +319,7 @@ app.get('/api/stories', async (req, res) => {
         createdAt: item.created_at
       }));
 
+    res.set('Cache-Control', EDGE_CACHE_HEADER);
     res.json({ success: true, stories });
   } catch (error) {
     console.error(error);
